@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/cache/app_cache_service.dart';
 import '../../../core/providers/supabase_provider.dart';
 import '../../club/providers/club_providers.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../../repository/providers/repository_providers.dart';
 
 // Provider que lista aspirantes en estado 'registrado'
@@ -160,6 +161,8 @@ class CoordinatorActions {
       ref.invalidate(pendingDocumentsProvider);
       ref.invalidate(repositoryDocumentsProvider);
       ref.invalidate(clubDocsCountProvider);
+      ref.invalidate(recentPostsProvider);
+      ref.invalidate(statsProvider);
       return true;
     } catch (e) {
       debugPrint('Error al revisar documento: $e');

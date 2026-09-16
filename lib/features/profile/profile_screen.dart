@@ -60,6 +60,7 @@ class ProfileScreen extends ConsumerWidget {
                 .invalidate('profile:$userId');
             ref.invalidate(profileProvider(userId));
             ref.invalidate(statsProvider(userId));
+            ref.invalidate(recentPostsProvider(userId));
           },
           child: ListView(
             padding: const EdgeInsets.only(bottom: 32),

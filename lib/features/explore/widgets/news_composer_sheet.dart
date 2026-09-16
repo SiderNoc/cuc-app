@@ -48,7 +48,7 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
       if (tag.isEmpty) continue;
       if (tag.length > maxSocialTagLength) {
         error =
-            'Cada etiqueta puede tener mÃ¡ximo $maxSocialTagLength caracteres.';
+        'Cada etiqueta puede tener máximo $maxSocialTagLength caracteres.';
         continue;
       }
       if (containsSocialTag(_tags, tag)) {
@@ -94,14 +94,14 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
             ListTile(
               leading: const Icon(Icons.photo_library_outlined,
                   color: AppColors.primary),
-              title: const Text('GalerÃ­a de fotos',
+              title: const Text('Galería de fotos',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined,
                   color: AppColors.primary),
-              title: const Text('Tomar fotografÃ­a',
+              title: const Text('Tomar fotografía',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
@@ -121,10 +121,10 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
 
     if (image != null) {
       final sizeInBytes = await image.length();
-      // ValidaciÃ³n preventiva: 5 megabytes = 5,242,880 bytes
+      // Validación preventiva: 5 megabytes = 5,242,880 bytes
       if (sizeInBytes > 5 * 1024 * 1024) {
         setState(() =>
-            _inlineError = 'La imagen excede el lÃ­mite permitido de 5MB.');
+        _inlineError = 'La imagen excede el límite permitido de 5MB.');
         return;
       }
       setState(() {
@@ -142,13 +142,13 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
     setState(() => _saving = true);
     try {
       await ref.read(exploreActionsProvider).createNews(
-            NewsInput(
-              title: _titleCtrl.text,
-              content: _contentCtrl.text,
-              imageFile: _selectedImage,
-              tags: List.unmodifiable(_tags),
-            ),
-          );
+        NewsInput(
+          title: _titleCtrl.text,
+          content: _contentCtrl.text,
+          imageFile: _selectedImage,
+          tags: List.unmodifiable(_tags),
+        ),
+      );
       if (!mounted) return;
       Navigator.pop(context);
 
@@ -156,7 +156,7 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
         context,
         icon: Icons.check_circle_outline,
         iconColor: AppColors.primary,
-        message: 'Noticia publicada con Ã©xito.',
+        message: 'Noticia publicada con éxito.',
       );
     } catch (e) {
       setState(() => _inlineError = e.toString().replaceAll('Exception: ', ''));
@@ -184,7 +184,7 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: FractionallySizedBox(
         heightFactor: 0.94,
         child: Container(
@@ -210,14 +210,14 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _buildFieldLabel('TÃ­tulo de la noticia'),
+                  _buildFieldLabel('Título de la noticia'),
                   TextFormField(
                     controller: _titleCtrl,
                     textCapitalization: TextCapitalization.sentences,
                     decoration: const InputDecoration(
                         hintText: 'Ej. Gran Cierre de Convocatorias'),
                     validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Ingresa un tÃ­tulo vÃ¡lido'
+                        ? 'Ingresa un título válido'
                         : null,
                   ),
                   const SizedBox(height: 16),
@@ -233,9 +233,9 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
                     maxLines: 14,
                     maxLength: 2000,
                     decoration: const InputDecoration(
-                        hintText: 'Escribe el mensaje oficial aquÃ­...'),
+                        hintText: 'Escribe el mensaje oficial aquí...'),
                     validator: (value) => value == null || value.trim().isEmpty
-                        ? 'El contenido no puede estar vacÃ­o'
+                        ? 'El contenido no puede estar vacío'
                         : null,
                   ),
                   const SizedBox(height: 8),
@@ -247,10 +247,10 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
                       children: _tags
                           .map(
                             (tag) => InputChip(
-                              label: Text(tag),
-                              onDeleted: _saving ? null : () => _removeTag(tag),
-                            ),
-                          )
+                          label: Text(tag),
+                          onDeleted: _saving ? null : () => _removeTag(tag),
+                        ),
+                      )
                           .toList(),
                     ),
                     const SizedBox(height: 8),
@@ -263,7 +263,7 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
                     decoration: InputDecoration(
                       hintText: 'Ej. inteligencia artificial, convocatoria',
                       helperText:
-                          'Enter o coma para agregar Â· ${_tags.length}/$maxSocialTags',
+                      'Enter o coma para agregar · ${_tags.length}/$maxSocialTags',
                       errorText: _tagError,
                       prefixIcon: const Icon(Icons.tag),
                       suffixIcon: IconButton(
@@ -282,7 +282,7 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
                     onSubmitted: _addTags,
                   ),
                   const SizedBox(height: 8),
-                  _buildFieldLabel('Imagen promocional (MÃ¡x 5MB)'),
+                  _buildFieldLabel('Imagen promocional (Máx 5MB)'),
                   const SizedBox(height: 4),
                   GestureDetector(
                     onTap: _saving ? null : _pickImage,
@@ -296,43 +296,43 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
                       ),
                       child: _selectedImage == null
                           ? const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_a_photo_outlined,
-                                    color: AppColors.muted, size: 28),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Seleccionar archivo (JPEG, PNG o WEBP)',
-                                  style: TextStyle(
-                                      color: AppColors.muted, fontSize: 11),
-                                ),
-                              ],
-                            )
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_a_photo_outlined,
+                              color: AppColors.muted, size: 28),
+                          SizedBox(height: 8),
+                          Text(
+                            'Seleccionar archivo (JPEG, PNG o WEBP)',
+                            style: TextStyle(
+                                color: AppColors.muted, fontSize: 11),
+                          ),
+                        ],
+                      )
                           : Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.file(File(_selectedImage!.path),
-                                      fit: BoxFit.cover),
-                                ),
-                                Positioned(
-                                  top: 8,
-                                  right: 8,
-                                  child: CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: Colors.black54,
-                                    child: IconButton(
-                                      padding: EdgeInsets.zero,
-                                      icon: const Icon(Icons.close,
-                                          color: Colors.white, size: 16),
-                                      onPressed: () =>
-                                          setState(() => _selectedImage = null),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        fit: StackFit.expand,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(File(_selectedImage!.path),
+                                fit: BoxFit.cover),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: CircleAvatar(
+                              radius: 16,
+                              backgroundColor: Colors.black54,
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                icon: const Icon(Icons.close,
+                                    color: Colors.white, size: 16),
+                                onPressed: () =>
+                                    setState(() => _selectedImage = null),
+                              ),
                             ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -371,9 +371,9 @@ class _NewsComposerSheetState extends ConsumerState<NewsComposerSheet> {
                       onPressed: _saving ? null : _submit,
                       icon: _saving
                           ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.send_outlined),
                       label: const Text('PUBLICAR COMUNICADO'),
                     ),
