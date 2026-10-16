@@ -3,8 +3,8 @@ import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 
+import 'package:saver_gallery/saver_gallery.dart';
 import '../../../core/theme/app_theme.dart';
 
 class NewsImageAttachment extends StatefulWidget {
@@ -21,6 +21,92 @@ class NewsImageAttachment extends StatefulWidget {
   State<NewsImageAttachment> createState() => _NewsImageAttachmentState();
 }
 
+String _imageExtensionFromBytes(List<int> bytes, String imageUrl) {
+  bool matches(List<int> signature) {
+    return bytes.length >= signature.length &&
+        List.generate(
+          signature.length,
+              (index) => bytes[index] == signature[index],
+        ).every((match) => match);
+  }
+
+  // JPEG
+  if (matches([0xFF, 0xD8, 0xFF])) return 'jpg';
+
+  // PNG
+  if (matches([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])) {
+    return 'png';
+  }
+
+  // GIF
+  if (matches([0x47, 0x49, 0x46, 0x38, 0x37, 0x61]) ||
+      matches([0x47, 0x49, 0x46, 0x38, 0x39, 0x61])) {
+    return 'gif';
+  }
+
+  // WebP
+  if (bytes.length >= 12 &&
+      matches([0x52, 0x49, 0x46, 0x46]) &&
+      String.fromCharCodes(bytes.sublist(8, 12)) == 'WEBP') {
+    return 'webp';
+  }
+
+  // BMP
+  if (matches([0x42, 0x4D])) return 'bmp';
+
+  // TIFF
+  if (matches([0x49, 0x49, 0x2A, 0x00]) ||
+      matches([0x4D, 0x4D, 0x00, 0x2A])) {
+    return 'tiff';
+  }
+
+  // AVIF
+  if (bytes.length >= 12 &&
+      String.fromCharCodes(bytes.sublist(4, 8)) == 'ftyp') {
+    final brand = String.fromCharCodes(bytes.sublist(8, 12));
+
+    if (brand == 'avif' || brand == 'avis') return 'avif';
+
+    if ([
+      'heic',
+      'heix',
+      'hevc',
+      'hevx',
+      'mif1',
+      'msf1',
+    ].contains(brand)) {
+      return 'heic';
+    }
+  }
+
+  // Si no se reconoce la firma, intenta obtener la extensión de la URL.
+  final uri = Uri.tryParse(imageUrl);
+  final path = uri?.path ?? '';
+  final match = RegExp(r'\.([a-zA-Z0-9]+)$').firstMatch(path);
+  final extension = match?.group(1)?.toLowerCase();
+
+  const supportedExtensions = {
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'webp',
+    'bmp',
+    'tif',
+    'tiff',
+    'avif',
+    'heic',
+  };
+
+  if (extension != null && supportedExtensions.contains(extension)) {
+    return extension == 'jpeg' ? 'jpg' : extension;
+  }
+
+  throw const FormatException(
+    'No se pudo identificar el formato de la imagen.',
+  );
+}
+
 class _NewsImageAttachmentState extends State<NewsImageAttachment> {
   bool _downloading = false;
 
@@ -32,29 +118,48 @@ class _NewsImageAttachmentState extends State<NewsImageAttachment> {
 
     try {
       final bytes = await _downloadImageBytes(widget.imageUrl);
-      final result = await ImageGallerySaverPlus.saveImage(
+
+      // Detecta el formato real de la imagen para asignar su extensión.
+      final extension = _imageExtensionFromBytes(
+        bytes,
+        widget.imageUrl,
+      );
+
+      final result = await SaverGallery.saveImage(
         bytes,
         quality: 100,
-        name:
-            'cuc_noticia_${widget.newsId}_${DateTime.now().millisecondsSinceEpoch}',
+        fileName:
+        'cuc_noticia_${widget.newsId}_${DateTime.now().millisecondsSinceEpoch}.$extension',
+        skipIfExists: false,
       );
-      final saved = result is Map &&
-          (result['isSuccess'] == true || result['isSuccess'] == 'true');
-      if (!saved) throw Exception('El dispositivo no pudo guardar la imagen.');
+
+      if (!result.isSuccess) {
+        throw Exception(
+          result.errorMessage ?? 'El dispositivo no pudo guardar la imagen.',
+        );
+      }
 
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Imagen guardada en tu galería.')),
+        const SnackBar(
+          content: Text('Imagen guardada en tu galería.'),
+        ),
       );
     } catch (_) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No se pudo guardar la imagen. Inténtalo de nuevo.'),
+          content: Text(
+            'No se pudo guardar la imagen. Inténtalo de nuevo.',
+          ),
         ),
       );
     } finally {
-      if (mounted) setState(() => _downloading = false);
+      if (mounted) {
+        setState(() => _downloading = false);
+      }
     }
   }
 
@@ -196,6 +301,8 @@ class _NewsImageViewer extends StatelessWidget {
 
 class _NewsImageError extends StatelessWidget {
   const _NewsImageError();
+
+
 
   @override
   Widget build(BuildContext context) {
