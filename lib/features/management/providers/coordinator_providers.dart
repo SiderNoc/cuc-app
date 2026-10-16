@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/cache/app_cache_service.dart';
 import '../../../core/providers/supabase_provider.dart';
 import '../../club/providers/club_providers.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../../repository/providers/repository_providers.dart';
 
 // Provider que lista aspirantes en estado 'registrado'
@@ -80,6 +81,33 @@ class CoordinatorActions {
     }
   }
 
+  // 🛡️ Rechazo de solicitud de ingreso con feedback obligatorio
+  static Future<bool> rejectMember(
+    WidgetRef ref,
+    String targetUserId,
+    String comment,
+  ) async {
+    final supabase = ref.read(supabaseClientProvider);
+    try {
+      await supabase.rpc('rechazar_miembro_club', params: {
+        'p_id_objetivo': targetUserId,
+        'p_comentario': comment,
+      });
+
+      final cache = ref.read(appCacheServiceProvider);
+      await cache.invalidate('profile:$targetUserId');
+      await cache.invalidatePrefix('club:');
+      ref.invalidate(pendingMembersProvider);
+      ref.invalidate(clubDirectoryProvider);
+      ref.invalidate(activeMembersProvider);
+      ref.invalidate(historicalMembersProvider);
+      return true;
+    } catch (e) {
+      debugPrint('Error al rechazar miembro: $e');
+      return false;
+    }
+  }
+
   // 🛡️ Nueva función para gestionar miembros existentes
   static Future<bool> updateMember(
     WidgetRef ref,
@@ -133,6 +161,8 @@ class CoordinatorActions {
       ref.invalidate(pendingDocumentsProvider);
       ref.invalidate(repositoryDocumentsProvider);
       ref.invalidate(clubDocsCountProvider);
+      ref.invalidate(recentPostsProvider);
+      ref.invalidate(statsProvider);
       return true;
     } catch (e) {
       debugPrint('Error al revisar documento: $e');

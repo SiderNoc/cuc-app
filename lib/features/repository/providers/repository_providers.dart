@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/cache/app_cache_service.dart';
 import '../../../core/providers/supabase_provider.dart';
 import '../../management/providers/coordinator_providers.dart';
+import '../../profile/providers/profile_providers.dart';
 
 const repositoryFileLimitBytes = 10 * 1024 * 1024;
 
@@ -483,6 +484,8 @@ class RepositoryActions {
     await cache.invalidatePrefix('repository:');
     await cache.invalidatePrefix('club:');
     ref.invalidate(repositoryDocumentsProvider);
+    ref.invalidate(recentPostsProvider);
+    ref.invalidate(statsProvider);
   }
 
   Future<String> uploadDocument(RepositoryUploadInput input) async {
