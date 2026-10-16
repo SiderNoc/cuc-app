@@ -6,7 +6,7 @@ import '../../../core/cache/app_cache_service.dart';
 import '../../../core/providers/supabase_provider.dart';
 import '../../management/providers/coordinator_providers.dart';
 import '../../profile/providers/profile_providers.dart';
-
+import 'dart:io';
 const repositoryFileLimitBytes = 10 * 1024 * 1024;
 
 const repositoryCategoryOptions = {
@@ -494,18 +494,21 @@ class RepositoryActions {
     }
 
     for (final file in input.files) {
-      final fileBytes = file.bytes;
-      if (fileBytes == null) {
-        throw Exception('No se pudo leer el archivo "${file.name}".');
+      // 🛡️ 1. Evitamos la RAM: Validamos usando la ruta física
+      if (file.path == null) {
+        throw Exception('No se pudo encontrar la ruta física del archivo "${file.name}".');
       }
-      if (fileBytes.length > repositoryFileLimitBytes) {
+
+      // 🛡️ 2. Cambio a lengthSync() en lugar de .size
+      final fileSize = file.lengthSync() ?? File(file.path!).lengthSync();
+      if (fileSize > repositoryFileLimitBytes) {
         throw Exception('El archivo "${file.name}" no puede superar 10MB.');
       }
       final extension = file.extension?.toLowerCase() ?? 'bin';
       if (!_allowedExtensions.contains(extension)) {
         throw Exception(
           'El formato de "${file.name}" no está permitido. '
-          'Usa PDF, DOC, DOCX, TXT, JPG, PNG o JPEG.',
+              'Usa PDF, DOC, DOCX, TXT, JPG, PNG o JPEG.',
         );
       }
     }
@@ -532,16 +535,17 @@ class RepositoryActions {
     try {
       await Future.wait([
         for (var index = 0; index < input.files.length; index++)
-          supabase.storage.from('repositorio').uploadBinary(
-                paths[index],
-                input.files[index].bytes!,
-                fileOptions: FileOptions(
-                  upsert: false,
-                  contentType: _contentType(
-                    input.files[index].extension?.toLowerCase() ?? 'bin',
-                  ),
-                ),
+        // Transmisión directa con .upload() pasándole el File de dart:io
+          supabase.storage.from('repositorio').upload(
+            paths[index],
+            File(input.files[index].path!),
+            fileOptions: FileOptions(
+              upsert: false,
+              contentType: _contentType(
+                input.files[index].extension?.toLowerCase() ?? 'bin',
               ),
+            ),
+          ),
       ]);
 
       final urls = paths
@@ -598,18 +602,22 @@ class RepositoryActions {
     }
 
     for (final file in replacementFiles) {
-      final fileBytes = file.bytes;
-      if (fileBytes == null) {
-        throw Exception('No se pudo leer el archivo "${file.name}".');
+      // 🛡️ 1. Evitamos la RAM: Validamos usando la ruta física
+      if (file.path == null) {
+        throw Exception('No se pudo encontrar la ruta física del archivo "${file.name}".');
       }
-      if (fileBytes.length > repositoryFileLimitBytes) {
+
+      // 🛡️ 2. Cambio a lengthSync() de dart:io para obtener el tamaño real del disco
+      final fileSize = File(file.path!).lengthSync();
+      if (fileSize > repositoryFileLimitBytes) {
         throw Exception('El archivo "${file.name}" no puede superar 10MB.');
       }
+
       final extension = file.extension?.toLowerCase() ?? 'bin';
       if (!_allowedExtensions.contains(extension)) {
         throw Exception(
           'El formato de "${file.name}" no está permitido. '
-          'Usa PDF, DOC, DOCX, TXT, JPG, PNG o JPEG.',
+              'Usa PDF, DOC, DOCX, TXT, JPG, PNG o JPEG.',
         );
       }
     }
@@ -630,28 +638,29 @@ class RepositoryActions {
           final file = replacementFiles[index];
           replacementPaths.add(
             '${user.id}/${uploadId}_${index}_'
-            '${file.name.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_')}',
+                '${file.name.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_')}',
           );
         }
 
         await Future.wait([
           for (var index = 0; index < replacementFiles.length; index++)
-            supabase.storage.from('repositorio').uploadBinary(
-                  replacementPaths[index],
-                  replacementFiles[index].bytes!,
-                  fileOptions: FileOptions(
-                    upsert: false,
-                    contentType: _contentType(
-                      replacementFiles[index].extension?.toLowerCase() ?? 'bin',
-                    ),
-                  ),
+          // 🛡️ 3. Transmisión directa con .upload() pasándole el File de dart:io
+            supabase.storage.from('repositorio').upload(
+              replacementPaths[index],
+              File(replacementFiles[index].path!),
+              fileOptions: FileOptions(
+                upsert: false,
+                contentType: _contentType(
+                  replacementFiles[index].extension?.toLowerCase() ?? 'bin',
                 ),
+              ),
+            ),
         ]);
 
         urls = replacementPaths
             .map(
               (path) => supabase.storage.from('repositorio').getPublicUrl(path),
-            )
+        )
             .toList(growable: false);
       }
 

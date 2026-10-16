@@ -35,10 +35,12 @@ class RepositoryDetailSheetState extends ConsumerState<RepositoryDetailSheet> {
       final xFiles = downloadedFiles.map((file) => XFile(file.path)).toList();
 
       // 3. Delegamos el manejo de los binarios al Share Sheet nativo
-      final result = await Share.shareXFiles(
-        xFiles,
-        subject: widget.document.title,
-        text: 'Anexos del documento: ${widget.document.title}',
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          files: xFiles,
+          subject: widget.document.title,
+          text: 'Anexos del documento: ${widget.document.title}',
+        ),
       );
 
       if (result.status == ShareResultStatus.success && mounted) {

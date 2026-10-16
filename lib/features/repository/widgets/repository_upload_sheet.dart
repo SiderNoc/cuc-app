@@ -61,8 +61,9 @@ class RepositoryUploadSheetState extends ConsumerState<RepositoryUploadSheet> {
     super.dispose();
   }
 
+
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
+    final selectedFiles = await FilePicker.pickFiles(
       type: FileType.custom,
       allowMultiple: true,
       allowedExtensions: const [
@@ -76,29 +77,39 @@ class RepositoryUploadSheetState extends ConsumerState<RepositoryUploadSheet> {
       ],
       withData: true,
     );
-    final selectedFiles = result?.files ?? const <PlatformFile>[];
+
     if (selectedFiles.isEmpty) {
       return;
     }
 
-    final oversizedFiles = selectedFiles
-        .where((file) => file.size > repositoryFileLimitBytes)
-        .map((file) => file.name)
-        .toList();
+    final oversizedFiles = <String>[];
+
+    for (final file in selectedFiles) {
+      final size = file.lengthSync();
+
+      if (size != null && size > repositoryFileLimitBytes) {
+        oversizedFiles.add(file.name);
+      }
+    }
+
     if (oversizedFiles.isNotEmpty) {
       setState(() {
         _inlineError =
-            'Cada archivo debe pesar máximo 10MB. Revisa: ${oversizedFiles.join(', ')}.';
+        'Cada archivo debe pesar máximo 10MB. '
+            'Revisa: ${oversizedFiles.join(', ')}.';
       });
       return;
     }
 
     final newFiles = selectedFiles.where((selected) {
-      return !_files.any(
-        (current) =>
-            current.name == selected.name && current.size == selected.size,
-      );
+      final selectedSize = selected.lengthSync();
+
+      return !_files.any((current) {
+        return current.name == selected.name &&
+            current.lengthSync() == selectedSize;
+      });
     }).toList();
+
     if (_files.length + newFiles.length > 3) {
       setState(() {
         _inlineError = 'Puedes adjuntar un máximo de 3 archivos.';
@@ -111,6 +122,7 @@ class RepositoryUploadSheetState extends ConsumerState<RepositoryUploadSheet> {
       _inlineError = null;
     });
   }
+
 
   void _removeFile(PlatformFile file) {
     setState(() {
