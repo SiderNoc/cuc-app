@@ -1,41 +1,30 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart'; // Asegúrate de ajustar la ruta relativa según corresponda
 
 class CucSnackBar {
-  /// Muestra un SnackBar premium con la estética unificada del CUC.
   static void show(
       BuildContext context, {
         required String message,
         IconData icon = Icons.check_circle_outline,
-        Color iconColor = AppColors.primary,
-        //Color borderColor = AppColors.primary,
+        Color? iconColor,
       }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final effectiveIconColor = iconColor ?? colorScheme.primary;
+
     // Limpia cualquier SnackBar activo previo para evitar acumulaciones en cola
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: AppColors.fondo,
-        //flota
-        //behavior: SnackBarBehavior.floating,
-        //elevation: 4,
-        //
-
-        //shape: RoundedRectangleBorder(
-          //borderRadius: BorderRadius.circular(12), //flota
-          //side: BorderSide(color: borderColor, width: 1),
-          //side: BorderSide(color: borderColor, width: 1),
-        //),
-
+        backgroundColor: colorScheme.surfaceContainerHighest,
         content: Row(
           children: [
-            Icon(icon, color: iconColor, size: 20),
+            Icon(icon, color: effectiveIconColor, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(
-                  color: AppColors.primary,
+                style: TextStyle(
+                  color: colorScheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),

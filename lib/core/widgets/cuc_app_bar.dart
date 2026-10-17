@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../services/auth_service.dart';
+import '../../features/settings/settings_screen.dart';
 import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
 
-/// AppBar reutilizable con el branding de CUC Research Portal.
-/// Usado en todas las pantallas autenticadas (Explorar, Agenda, Foro, Repos, Perfil).
+// AppBar reutilizable con el branding de CUC Research Portal.
+// Usado en todas las pantallas autenticadas.
 class CucAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const CucAppBar({super.key});
 
@@ -16,9 +16,9 @@ class CucAppBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unreadCount = ref.watch(notificationsProvider).maybeWhen(
-          data: (items) => items.where((item) => !item.read).length,
-          orElse: () => 0,
-        );
+      data: (items) => items.where((item) => !item.read).length,
+      orElse: () => 0,
+    );
 
     return AppBar(
       titleSpacing: 16,
@@ -32,7 +32,7 @@ class CucAppBar extends ConsumerWidget implements PreferredSizeWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child:
-                const Icon(Icons.science, color: AppColors.primary, size: 20),
+            const Icon(Icons.science, color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 10),
           const Column(
@@ -72,10 +72,17 @@ class CucAppBar extends ConsumerWidget implements PreferredSizeWidget {
           color: Colors.white,
         ),
         IconButton(
-          tooltip: 'Cerrar sesión',
-          onPressed: () => _confirmLogout(context, ref),
-          icon: const Icon(Icons.logout_rounded),
-          color: AppColors.error,
+          tooltip: 'Configuracion',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SettingsScreen(),
+              ),
+            );
+          },
+          icon: const Icon(Icons.settings_outlined),
+          color: Colors.white,
         ),
         const SizedBox(width: 4),
       ],
@@ -97,50 +104,6 @@ class CucAppBar extends ConsumerWidget implements PreferredSizeWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => const _NotificationsSheet(),
     );
-  }
-
-  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: const Icon(
-          Icons.logout_rounded,
-          color: AppColors.error,
-        ),
-        title: const Text('Cerrar sesión'),
-        content: const Text(
-          'Tu sesión actual se cerrará y tendrás que identificarte '
-          'nuevamente para acceder. ¿Deseas continuar?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(
-              'Cerrar sesión',
-              style: TextStyle(
-                color: AppColors.error,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (shouldLogout != true || !context.mounted) return;
-
-    try {
-      await ref.read(authServiceProvider).cerrarSesion();
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo cerrar sesión: $error')),
-      );
-    }
   }
 }
 
@@ -361,6 +324,6 @@ String _relativeTime(DateTime date) {
   if (diff.inMinutes < 60) return 'hace ${diff.inMinutes} min';
   if (diff.inHours < 24) return 'hace ${diff.inHours} h';
   if (diff.inDays == 1) return 'ayer';
-  if (diff.inDays < 7) return 'hace ${diff.inDays} días';
+  if (diff.inDays < 7) return 'hace ${diff.inDays} dias';
   return '${date.day}/${date.month}/${date.year}';
 }

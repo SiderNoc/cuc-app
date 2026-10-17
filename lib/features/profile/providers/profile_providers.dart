@@ -1,3 +1,4 @@
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -5,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/cache/app_cache_service.dart';
 import '../../../core/providers/supabase_provider.dart';
 
-// 1. Actualizamos el Modelo
+// Actualizamos el Modelo
 class UserProfile {
   final String id;
   final String nombreCompleto;
@@ -14,13 +15,13 @@ class UserProfile {
   final String rol;
   final String estado;
   final String divisionAcronimo;
-
-  //Pueden ser nulos si el usuario apenas se registró y no tiene club asignado
   final String? clubId;
   final String? clubNombre;
-
-  // Comentario de rechazo del coordinador (solo aplica si estado == 'rechazado')
   final String? comentariosRevision;
+
+  // Nuevos campos de accesibilidad extraidos del JSONB
+  final bool altoContraste;
+  final double escalaTexto;
 
   UserProfile({
     required this.id,
@@ -33,11 +34,16 @@ class UserProfile {
     this.clubId,
     this.clubNombre,
     this.comentariosRevision,
+    required this.altoContraste,
+    required this.escalaTexto,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
-    // Manejo seguro de nulos (Null-Safety) por si el JOIN de clubes viene vacío
     final clubData = json['clubes'];
+
+    final configMap = json['configuracion_app'] as Map<String, dynamic>? ?? {};
+    final altoContraste = configMap['alto_contraste'] as bool? ?? false;
+    final escalaTexto = (configMap['escala_texto'] as num?)?.toDouble() ?? 1.0;
 
     return UserProfile(
       id: json['id'],
@@ -50,6 +56,8 @@ class UserProfile {
       clubId: clubData?['id'],
       clubNombre: clubData?['nombre'],
       comentariosRevision: json['comentarios_revision']?.toString(),
+      altoContraste: altoContraste,
+      escalaTexto: escalaTexto,
     );
   }
 
@@ -65,10 +73,14 @@ class UserProfile {
       'clubes': clubId == null && clubNombre == null
           ? null
           : {
-              'id': clubId,
-              'nombre': clubNombre,
-            },
+        'id': clubId,
+        'nombre': clubNombre,
+      },
       'comentarios_revision': comentariosRevision,
+      'configuracion_app': {
+        'alto_contraste': altoContraste,
+        'escala_texto': escalaTexto,
+      }
     };
   }
 }
@@ -156,6 +168,20 @@ class ProfileActions {
     }
     ref.invalidate(currentUserProfileProvider);
     }
+
+  Future<void> actualizarPreferencias(bool altoContraste, double escalaTexto) async {
+    final supabase = ref.read(supabaseClientProvider);
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    // 1. Invocamos el RPC en segundo plano
+    await supabase.rpc('cuc_actualizar_preferencias', params: {
+      'p_nueva_config': {
+        'alto_contraste': altoContraste,
+        'escala_texto': escalaTexto,
+      }
+    });
+  }
 }
 
 // 2. Actualizamos el Provider
@@ -312,3 +338,53 @@ final currentUserProfileProvider =
   // Consumimos la única fuente de la verdad
   return await ref.watch(profileProvider(user.id).future);
 });
+
+// --- GESTOR DE ESTADO DE ACCESIBILIDAD ---
+
+// GESTOR DE ESTADO DE ACCESIBILIDAD
+
+class AppAccessibility {
+  final bool altoContraste;
+  final double escalaTexto;
+  const AppAccessibility({this.altoContraste = false, this.escalaTexto = 1.0});
+}
+
+class AccessibilityNotifier extends Notifier<AppAccessibility> {
+  @override
+  AppAccessibility build() {
+    // Usamos .value para extraer el UserProfile? del AsyncValue
+    final profile = ref.watch(currentUserProfileProvider).value;
+
+    return AppAccessibility(
+      altoContraste: profile?.altoContraste ?? false,
+      escalaTexto: profile?.escalaTexto ?? 1.0,
+    );
+  }
+
+  // Actualiza la UI de toda la app instantaneamente (sin tocar Supabase)
+  void updateLocal(bool contrast, double scale) {
+    state = AppAccessibility(altoContraste: contrast, escalaTexto: scale);
+  }
+
+  // Persiste en Supabase en segundo plano sin interrumpir al usuario
+  Future<void> saveToDatabase() async {
+    final supabase = ref.read(supabaseClientProvider);
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      await supabase.rpc('cuc_actualizar_preferencias', params: {
+        'p_nueva_config': {
+          'alto_contraste': state.altoContraste,
+          'escala_texto': state.escalaTexto,
+        }
+      });
+      // Invalida la cache local silenciosamente para mantener coherencia
+      await ref.read(appCacheServiceProvider).invalidate('profile:${user.id}');
+    } catch (e) {
+      // Manejo de error silencioso a nivel arquitectonico
+    }
+  }
+}
+
+final accessibilityProvider = NotifierProvider<AccessibilityNotifier, AppAccessibility>(AccessibilityNotifier.new);

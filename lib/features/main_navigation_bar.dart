@@ -30,7 +30,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     NavigationDestination(
       icon: Icon(Icons.calendar_month_outlined),
       selectedIcon: Icon(Icons.calendar_month),
-      label: 'MI AGENDA',
+      label: 'AGENDA',
     ),
     NavigationDestination(
       icon: Icon(Icons.forum_outlined),

@@ -57,23 +57,28 @@ class CucPillTabBar extends StatelessWidget implements PreferredSizeWidget {
             tabs: [
               for (var index = 0; index < labels.length; index++)
                 Tab(
-                  height: 42,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (icons?[index] != null) ...[
-                        Icon(icons![index], size: 17),
-                        const SizedBox(width: 6),
-                      ],
-                      Flexible(
-                        child: Text(
-                          labels[index],
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  // Eliminamos height: 42 para permitir expansion
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (icons?[index] != null) ...[
+                          Icon(icons![index], size: 17),
+                          const SizedBox(width: 6),
+                        ],
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              labels[index],
+                              maxLines: 1,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
             ],

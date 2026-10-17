@@ -286,7 +286,7 @@ class PendingProfileScreen extends ConsumerWidget {
     final formKey = GlobalKey<FormState>();
     bool isSubmitting = false;
 
-    // 🛡️ Obtenemos el catálogo de clubes antes de abrir el diálogo
+    // Obtenemos el catálogo de clubes antes de abrir el diálogo
     final supabase = ref.read(supabaseClientProvider);
     final response = await supabase.from('clubes').select('id, nombre').order('nombre');
     final clubes = List<Map<String, dynamic>>.from(response);

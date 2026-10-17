@@ -67,7 +67,8 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 152,
+      // Reemplazamos height: 152 por restricciones minimas
+      constraints: const BoxConstraints(minHeight: 152),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
