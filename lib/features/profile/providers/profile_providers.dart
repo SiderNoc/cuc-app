@@ -139,21 +139,23 @@ class ProfileActions {
   Future<void> reenviarSolicitudIngreso({
     required String nombre,
     required String matricula,
+    required String clubId, // Nuevo parámetro obligatorio
   }) async {
     final supabase = ref.read(supabaseClientProvider);
 
     await supabase.rpc('reenviar_solicitud_ingreso', params: {
-      'p_nuevo_nombre': nombre,
-      'p_nueva_matricula': matricula,
+    'p_nuevo_nombre': nombre,
+    'p_nueva_matricula': matricula,
+    'p_nuevo_club': clubId, // Conectado a nuestro nuevo RPC
     });
 
     final user = supabase.auth.currentUser;
     if (user != null) {
-      await ref.read(appCacheServiceProvider).invalidate('profile:${user.id}');
-      ref.invalidate(profileProvider(user.id));
+    await ref.read(appCacheServiceProvider).invalidate('profile:${user.id}');
+    ref.invalidate(profileProvider(user.id));
     }
     ref.invalidate(currentUserProfileProvider);
-  }
+    }
 }
 
 // 2. Actualizamos el Provider

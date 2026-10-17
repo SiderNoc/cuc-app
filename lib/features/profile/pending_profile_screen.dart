@@ -277,16 +277,27 @@ class PendingProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _openCorrectionForm(
-    BuildContext context,
-    WidgetRef ref,
-    UserProfile? profile,
-  ) async {
-    final nombreController =
-        TextEditingController(text: profile?.nombreCompleto ?? '');
-    final matriculaController =
-        TextEditingController(text: profile?.matricula ?? '');
+      BuildContext context,
+      WidgetRef ref,
+      UserProfile? profile,
+      ) async {
+    final nombreController = TextEditingController(text: profile?.nombreCompleto ?? '');
+    final matriculaController = TextEditingController(text: profile?.matricula ?? '');
     final formKey = GlobalKey<FormState>();
     bool isSubmitting = false;
+
+    // 🛡️ Obtenemos el catálogo de clubes antes de abrir el diálogo
+    final supabase = ref.read(supabaseClientProvider);
+    final response = await supabase.from('clubes').select('id, nombre').order('nombre');
+    final clubes = List<Map<String, dynamic>>.from(response);
+
+    // Por defecto, preseleccionamos el club anterior si aún existe en el catálogo
+    String? selectedClubId = profile?.clubId;
+    if (!clubes.any((c) => c['id'] == selectedClubId)) {
+      selectedClubId = clubes.isNotEmpty ? clubes.first['id'].toString() : null;
+    }
+
+    if (!context.mounted) return;
 
     await showDialog(
       context: context,
@@ -297,136 +308,123 @@ class PendingProfileScreen extends ConsumerWidget {
             backgroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
-              side: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+              side: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
             ),
             title: const Row(
               children: [
-                Icon(
-                  Icons.edit_document,
-                  color: AppColors.primary,
-                  size: 23,
-                ),
+                Icon(Icons.edit_document, color: AppColors.primary, size: 23),
                 SizedBox(width: 10),
-                Text('Corregir y Reenviar'),
+                Text('Corregir Solicitud'),
               ],
             ),
             content: Form(
               key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Corrige tus datos y tu solicitud volverá a la cola de aprobación.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.muted,
-                      height: 1.5,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Corrige tus datos o cambia de club. Tu solicitud volverá a la cola de aprobación.',
+                      style: TextStyle(fontSize: 12, color: AppColors.muted, height: 1.5),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: nombreController,
-                    decoration: InputDecoration(
-                      labelText: 'NOMBRE COMPLETO',
-                      filled: true,
-                      fillColor: AppColors.background,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: nombreController,
+                      decoration: InputDecoration(
+                        labelText: 'NOMBRE COMPLETO',
+                        filled: true,
+                        fillColor: AppColors.background,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                       ),
+                      validator: (value) => (value == null || value.trim().length < 3)
+                          ? 'Mínimo 3 caracteres' : null,
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().length < 3) {
-                        return 'Mínimo 3 caracteres';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: matriculaController,
-                    decoration: InputDecoration(
-                      labelText: 'MATRÍCULA INSTITUCIONAL',
-                      filled: true,
-                      fillColor: AppColors.background,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: matriculaController,
+                      decoration: InputDecoration(
+                        labelText: 'MATRÍCULA INSTITUCIONAL',
+                        filled: true,
+                        fillColor: AppColors.background,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                       ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) return 'Campo requerido';
+                        if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) return 'Solo caracteres alfanuméricos';
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Campo requerido';
-                      }
-                      if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
-                        return 'Solo caracteres alfanuméricos';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    // 🛡️ Nuevo selector de club
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedClubId,
+                      decoration: InputDecoration(
+                        labelText: 'SELECCIONA TU CLUB',
+                        filled: true,
+                        fillColor: AppColors.background,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      dropdownColor: AppColors.surface,
+                      items: clubes.map((club) {
+                        return DropdownMenuItem<String>(
+                          value: club['id'].toString(),
+                          child: Text(
+                            club['nombre'].toString(),
+                            style: const TextStyle(fontSize: 13, color: AppColors.onSurface),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => selectedClubId = value);
+                      },
+                      validator: (value) => value == null ? 'Selecciona un club' : null,
+                    ),
+                  ],
+                ),
               ),
             ),
             actions: [
               TextButton(
-                onPressed:
-                    isSubmitting ? null : () => Navigator.pop(dialogContext),
-                child: const Text(
-                  'CANCELAR',
-                  style: TextStyle(color: AppColors.muted),
-                ),
+                onPressed: isSubmitting ? null : () => Navigator.pop(dialogContext),
+                child: const Text('CANCELAR', style: TextStyle(color: AppColors.muted)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: isSubmitting
                     ? null
                     : () async {
-                        if (!formKey.currentState!.validate()) return;
-                        setState(() => isSubmitting = true);
+                  if (!formKey.currentState!.validate()) return;
+                  setState(() => isSubmitting = true);
 
-                        var success = true;
-                        String message = 'Solicitud enviada de nuevo';
-                        try {
-                          await ref
-                              .read(profileActionsProvider)
-                              .reenviarSolicitudIngreso(
-                            nombre: nombreController.text.trim(),
-                            matricula: matriculaController.text.trim(),
-                          );
-                        } catch (e) {
-                          success = false;
-                          message = 'Fallo en la base de datos';
-                        }
+                  var success = true;
+                  String message = 'Solicitud enviada de nuevo';
+                  try {
+                    await ref.read(profileActionsProvider).reenviarSolicitudIngreso(
+                      nombre: nombreController.text.trim(),
+                      matricula: matriculaController.text.trim(),
+                      clubId: selectedClubId!, // 🛡️ Enviamos el nuevo club
+                    );
+                  } catch (e) {
+                    success = false;
+                    message = 'Fallo en la base de datos: $e';
+                  }
 
-                        if (!dialogContext.mounted) return;
-                        Navigator.pop(dialogContext);
-                        ScaffoldMessenger.of(dialogContext).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              success
-                                  ? message
-                                  : 'Error al procesar la solicitud',
-                            ),
-                            backgroundColor:
-                                success ? const Color(0xFF007A33) : Colors.red,
-                          ),
-                        );
-                      },
+                  if (!dialogContext.mounted) return;
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(
+                      content: Text(success ? message : message),
+                      backgroundColor: success ? const Color(0xFF007A33) : Colors.red,
+                    ),
+                  );
+                },
                 child: isSubmitting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : const Text('REENVIAR'),
               ),
             ],
