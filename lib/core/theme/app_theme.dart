@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Colores base inmutables
   static const primary = Color(0xFF6EE718);
   static const background = Color(0xFF0D110E);
   static const surface = Color(0xFF161B14);
@@ -13,96 +12,161 @@ class AppColors {
   static const onSurface = Color(0xFFE6E6E6);
   static const muted = Color(0xFF8B9A8F);
   static const error = Color(0xFFB71C1C);
+  static const fondo = Color(0xff212f17);
 }
 
 class AppTheme {
   AppTheme._();
 
-  static ThemeData getTheme({required bool isHighContrast}) {
-    // Definimos los colores dinamicos. En alto contraste usamos negros puros y blancos puros.
-    final currentBackground = isHighContrast ? const Color(0xFF000000) : AppColors.background;
-    final currentSurface = isHighContrast ? const Color(0xFF000000) : AppColors.surface;
-    final currentBorder = isHighContrast ? AppColors.primary : AppColors.border;
-    final currentMuted = isHighContrast ? const Color(0xFFCCCCCC) : AppColors.muted;
-    final currentOnBackground = isHighContrast ? const Color(0xFFFFFFFF) : AppColors.onBackground;
-
-    final colorScheme = ColorScheme(
+  static ThemeData get dark {
+    const colorScheme = ColorScheme(
       brightness: Brightness.dark,
       primary: AppColors.primary,
-      onPrimary: currentBackground,
+      onPrimary: AppColors.background,
       secondary: AppColors.primary,
-      onSecondary: currentBackground,
+      onSecondary: AppColors.background,
       error: AppColors.error,
-      onError: currentBackground,
-      surface: currentSurface,
-      onSurface: currentOnBackground,
+      onError: AppColors.background,
+      surface: AppColors.surface,
+      onSurface: AppColors.onSurface,
       surfaceContainerHighest: AppColors.surfaceVariant,
-      outline: currentBorder,
-      outlineVariant: currentBorder,
+      outline: AppColors.border,
+      outlineVariant: AppColors.border,
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: currentBackground,
+      scaffoldBackgroundColor: AppColors.background,
       fontFamily: 'SpaceGrotesk',
 
-      appBarTheme: AppBarTheme(
-        backgroundColor: currentBackground,
-        foregroundColor: currentOnBackground,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.onBackground,
         elevation: 0,
         scrolledUnderElevation: 0,
         titleTextStyle: TextStyle(
           fontFamily: 'SpaceGrotesk',
           fontWeight: FontWeight.w700,
           fontSize: 16,
-          color: currentOnBackground,
+          color: AppColors.onBackground,
         ),
       ),
 
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: const Color(0xFF0B110D),
+        indicatorColor: Colors.transparent,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: isSelected ? AppColors.primary : AppColors.muted,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: isSelected ? AppColors.primary : AppColors.muted,
+            size: 24,
+          );
+        }),
+      ),
+
       cardTheme: CardThemeData(
-        color: currentSurface,
+        color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: currentBorder, width: isHighContrast ? 2 : 1),
+          side: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: currentBackground,
+        fillColor: AppColors.background,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: currentBorder),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: currentBorder),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2.0),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
-        hintStyle: TextStyle(color: currentMuted, fontSize: 14),
-        prefixIconColor: currentMuted,
+        hintStyle: const TextStyle(color: AppColors.muted, fontSize: 14),
+        prefixIconColor: AppColors.muted,
       ),
 
-      dividerTheme: DividerThemeData(
-        color: currentBorder,
-        thickness: isHighContrast ? 2 : 1,
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.background,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
+            letterSpacing: 1.5,
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          side: const BorderSide(color: AppColors.border),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            letterSpacing: 1.2,
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+        ),
+      ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+        ),
+      ),
+
+      dividerTheme: const DividerThemeData(
+        color: AppColors.border,
+        thickness: 1,
         space: 0,
       ),
 
-      textTheme: TextTheme(
-        displayLarge: TextStyle(color: currentOnBackground, fontWeight: FontWeight.w700),
-        titleLarge: TextStyle(color: currentOnBackground, fontWeight: FontWeight.w700, fontSize: 18),
-        titleMedium: TextStyle(color: currentOnBackground, fontWeight: FontWeight.w600, fontSize: 15),
-        bodyLarge: TextStyle(color: currentOnBackground, fontSize: 15),
-        bodyMedium: TextStyle(color: currentOnBackground, fontSize: 13),
-        bodySmall: TextStyle(color: currentMuted, fontSize: 11),
-        labelSmall: TextStyle(color: currentMuted, fontSize: 10, letterSpacing: 1.0),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+        labelStyle: const TextStyle(
+          color: AppColors.primary,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+        ),
+        side: const BorderSide(color: AppColors.primary, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      ),
+
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(color: AppColors.onBackground, fontWeight: FontWeight.w700),
+        titleLarge: TextStyle(color: AppColors.onBackground, fontWeight: FontWeight.w700, fontSize: 18),
+        titleMedium: TextStyle(color: AppColors.onBackground, fontWeight: FontWeight.w600, fontSize: 15),
+        bodyLarge: TextStyle(color: AppColors.onSurface, fontSize: 15),
+        bodyMedium: TextStyle(color: AppColors.onSurface, fontSize: 13),
+        bodySmall: TextStyle(color: AppColors.muted, fontSize: 11),
+        labelSmall: TextStyle(color: AppColors.muted, fontSize: 10, letterSpacing: 1.0),
       ),
     );
   }

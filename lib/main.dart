@@ -48,21 +48,20 @@ void main() async {
 class CucApp extends ConsumerWidget {
   const CucApp({super.key});
 
+// En tu archivo lib/main.dart, dentro de CucApp:
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-
-    // 🛡️ Escuchamos el estado optimista ultrarrápido
     final accState = ref.watch(accessibilityProvider);
 
+    // Mantenemos solo la escala de texto con limite 1.2
     final double safeTextScale = accState.escalaTexto.clamp(1.0, 1.2);
-    final bool isHighContrast = accState.altoContraste;
 
     return MaterialApp.router(
       title: 'CUC App',
       debugShowCheckedModeBanner: false,
-      // Inyectamos dinámicamente la paleta de colores
-      theme: AppTheme.getTheme(isHighContrast: isHighContrast),
+      theme: AppTheme.dark, // Restaurado al tema estatico original
 
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -80,7 +79,6 @@ class CucApp extends ConsumerWidget {
         return MediaQuery(
           data: mediaQueryData.copyWith(
             textScaler: TextScaler.linear(safeTextScale),
-            highContrast: isHighContrast,
           ),
           child: child ?? const SizedBox.shrink(),
         );

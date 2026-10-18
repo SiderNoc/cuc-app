@@ -11,7 +11,6 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Leemos el estado instantáneo
     final accState = ref.watch(accessibilityProvider);
     final notifier = ref.read(accessibilityProvider.notifier);
 
@@ -37,46 +36,29 @@ class SettingsScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.border),
             ),
-            child: Column(
-              children: [
-                SwitchListTile(
-                  title: const Text('Modo de Alto Contraste'),
-                  subtitle: const Text(
-                    'Aumenta el contraste de los textos y bordes para mayor legibilidad.',
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Tamano del Texto'),
+                  const SizedBox(height: 8),
+                  Slider(
+                    value: accState.escalaTexto,
+                    min: 1.0,
+                    max: 1.2,
+                    divisions: 2,
+                    label: '${(accState.escalaTexto * 100).toInt()}%',
+                    activeColor: AppColors.primary,
+                    onChanged: (val) {
+                      notifier.updateLocal(false, val); // Forzamos false en contraste
+                    },
+                    onChangeEnd: (val) {
+                      notifier.saveToDatabase();
+                    },
                   ),
-                  value: accState.altoContraste,
-                  activeThumbColor: AppColors.primary,
-                  onChanged: (val) {
-                    notifier.updateLocal(val, accState.escalaTexto);
-                    notifier.saveToDatabase();
-                  },
-                ),
-                const Divider(height: 1),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Tamaño del Texto'),
-                      Slider(
-                        value: accState.escalaTexto,
-                        min: 1.0,
-                        max: 1.2,
-                        divisions: 2,
-                        label: '${(accState.escalaTexto * 100).toInt()}%',
-                        activeColor: AppColors.primary,
-                        onChanged: (val) {
-                          notifier.updateLocal(accState.altoContraste, val);
-                        },
-                        onChangeEnd: (val) {
-                          notifier.saveToDatabase();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 32),
@@ -103,7 +85,7 @@ class SettingsScreen extends ConsumerWidget {
               await ref.read(authServiceProvider).cerrarSesion();
             },
             icon: const Icon(Icons.logout),
-            label: const Text('CERRAR SESIÓN DE FORMA SEGURA'),
+            label: const Text('CERRAR SESIÓN'),
           ),
         ],
       ),
